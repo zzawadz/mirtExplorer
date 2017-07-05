@@ -60,7 +60,7 @@ compare_students <- function(data, fit, first.id, second.id) {
   })
 
   plot(item.values[[1]], type = "n",
-       xlab = "Ability", ylab = "Probability")
+       xlab = "Ability", ylab = "Probability", ylim = c(0,1))
 
   first  <- first.pattern[different.scores]
   second <- second.pattern[different.scores]
@@ -70,8 +70,8 @@ compare_students <- function(data, fit, first.id, second.id) {
   first.score  <- fscores(fit, response.pattern = first.pattern)
   second.score <- fscores(fit, response.pattern = second.pattern)
 
-  abline(v = first.score[1,"F1"], col = "green")
-  abline(v = second.score[1,"F1"], col = "red")
+  abline(v = first.score[1,"F1"], col = "green", lty = 2, lwd = 2)
+  abline(v = second.score[1,"F1"], col = "red", lty = 2, lwd = 2)
 }
 
 
