@@ -4,33 +4,20 @@
 #' @param fit fitted model.
 #' @param target.score raw score used to subset data.
 #'
-#' @return a list containing answers pattern
-#' for best and worst student in term of fitted ability for
-#' given raw score.
+#' @return vector.
 #'
 #' @examples
-diff_patterns <- function(data, fit, target.score) {
+distant_idx <- function(data, fit, target.score) {
 
   final.score <- rowSums(data)
   irt.score   <- fscores(fit)[,1]
 
-  idx <- which(final.score %in% target.score)
+  idx <- final.score %in% target.score
 
-  max.id <- which.max(irt.score[idx])[1]
-  min.id <- which.min(irt.score[idx])[1]
+  max.id <- which(max(irt.score[idx])[1] == irt.score & idx)
+  min.id <- which(min(irt.score[idx])[1] == irt.score & idx)
 
-
-  best.pattern  <- data[idx,][max.id,]
-  worst.pattern <- data[idx,][min.id,]
-
-  result <- list(
-    best.pattern = best.pattern,
-    worst.pattern = worst.pattern,
-    different.scores = which(best.pattern != worst.pattern)
-  )
-
-  return(result)
-
+  c(max.id = max.id, min.id = min.id)
 }
 
 #' Compare the answers for the most distant students in terms of ability.
@@ -50,11 +37,21 @@ diff_patterns <- function(data, fit, target.score) {
 #' fit <- mirt(data, 1)
 #' plot_diff_students(data, fit, 10:20)
 #'
-plot_diff_students <- function(data, fit, target.score) {
+compare_most_distant_students <- function(data, fit, target.score) {
 
-  result <- diff_patterns(data, fit, target.score)
+  idx <- distant_idx(data, fit, target.score)
+  compare_students(data = data, fit = fit,
+                   first.id = idx[[1]], second.id = idx[[2]])
+}
 
-  item.values <- lapply(result$different.scores, function(i) {
+compare_students <- function(data, fit, first.id, second.id) {
+
+  first.pattern  <- data[first.id, ]
+  second.pattern <- data[second.id, ]
+
+  different.scores <- which(first.pattern != second.pattern)
+
+  item.values <- lapply(different.scores, function(i) {
     pl <- itemplot(fit, item = i)
     list(
       x = pl$panel.args[[1]]$x,
@@ -65,17 +62,18 @@ plot_diff_students <- function(data, fit, target.score) {
   plot(item.values[[1]], type = "n",
        xlab = "Ability", ylab = "Probability")
 
-  best  <- result$best.pattern[result$different.scores]
-  worst <- result$worst.pattern[result$different.scores]
+  first  <- first.pattern[different.scores]
+  second <- second.pattern[different.scores]
 
-  mapply(function(x, col) lines(x[[1]], x[[2]], col = ifelse(col == 1, "green", "red")), item.values, best)
+  mapply(function(x, col) lines(x[[1]], x[[2]], col = ifelse(col == 1, "green", "red")), item.values, first)
 
-  best.score  <- fscores(fit, response.pattern = result$best.pattern)
-  worst.score <- fscores(fit, response.pattern = result$worst.pattern)
+  first.score  <- fscores(fit, response.pattern = first.pattern)
+  second.score <- fscores(fit, response.pattern = second.pattern)
 
-  abline(v = best.score[1,"F1"], col = "green")
-  abline(v = worst.score[1,"F1"], col = "red")
+  abline(v = first.score[1,"F1"], col = "green")
+  abline(v = second.score[1,"F1"], col = "red")
 }
+
 
 #' Create simple plot to show the correlation between raw score and IRT ability.
 #'
