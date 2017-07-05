@@ -97,8 +97,47 @@ plot_score_ability_corr <- function(data, fit) {
   irt.score   <- fscores(fit)[,1]
 
   cor <- 100 * cor(final.score, irt.score)
+  lm <- lm(irt.score ~ final.score)
 
-  plot(final.score, irt.score, xlab = "Raw score", ylab = "IRT score", main = sprintf("Correlation: %.2f%%", cor))
+  dt <- data.frame(final.score, irt.score)
 
-  abline(lm(irt.score ~ final.score), col = "red")
+  pl <- plot_ly(data = dt, x = ~final.score , y = ~irt.score, source = "scoreAbilityCorr") %>% add_markers()
+  pl
 }
+
+create_pattern_info <- function(pattern, fit) {
+
+  total.score <- fscores(fit, response.pattern = pattern)[,"F1"]
+
+  probability <- vapply(seq_along(pattern), FUN.VALUE = 0.0,
+    function(x) probtrace(extract.item(fit, x), total.score)[[2]])
+
+  xval <- seq(-6, 6, by = 0.01)
+  items <- coef(fit, simplify = TRUE)$items
+  items.names <- rownames(items)
+  n.items <- nrow(items)
+
+  probability <- lapply(
+    seq_along(pattern),
+    function(x)
+      dplyr::data_frame(
+      Id   = x,
+      Item = items.names[x],
+      Ability = xval,
+      Trace = probtrace(extract.item(fit, x), xval)[,2]))
+
+
+  probability <- do.call(dplyr::bind_rows, probability)
+
+  Id <- probability$Id
+
+  probability <- probability %>% mutate(Color = case_when(
+    is.na(pattern[Id]) ~ "NA",
+    pattern[Id] == 1 ~ "Correct",
+    pattern[Id] == 0 ~ "Wrong"
+  ))
+
+  ggplot(probability) + geom_vline(xintercept = total.score, color = "darkblue", size = 1.2, linetype = 2) + geom_line(aes(x = Ability, y = Trace, group = Item, color = Color)) + theme_bw() + scale_color_manual(values = c("NA" = "grey", "Correct" = "green", "Wrong" = "red"))
+
+}
+
