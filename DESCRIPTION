@@ -8,4 +8,4 @@ Description: Some tools created to better understand IRT models.
 License: MIT
 Encoding: UTF-8
 LazyData: true
-Depends: mirt, shiny
+Depends: mirt, shiny, dplyr, stringi, magrittr, plotly, ggplot2

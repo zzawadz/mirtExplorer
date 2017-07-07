@@ -22,7 +22,7 @@ shinyServer(function(input, output) {
 
     event <- event_data("plotly_click", source = "scoreAbilityCorr")
     req(event)
-
+    print(event$pointNumber + 1)
     pattern <- data[event$pointNumber + 1,]
     create_pattern_info(pattern = pattern, fit = fit)
   })
